@@ -1,60 +1,97 @@
 const axios = require('axios');
+const config = require('./config');
 
 async function generatePost() {
-  const prompts = [
-    'Generate a tweet about OpenALCHI’s NFT creation feature with a link to https://openalchi.xyz.',
-    'Generate a tweet promoting a tutorial from https://docs.openalchi.xyz.',
-    'Generate a tweet about OpenALCHI’s royalty system with a link to https://openalchi.xyz.',
-    'Generate a poll about AI-blockchain use cases with hashtags #Web3 #NFTs.'
-  ];
-  const fallbacks = [
-    '🚀 Create AI-powered NFTs with OpenALCHI! Start now: https://openalchi.xyz #DecentralizedAI #NFTs',
-    '🧪 Learn AI-blockchain integration with OpenALCHI’s docs: https://docs.openalchi.xyz #Web3 #OpenSource',
-    '💰 Earn royalties with OpenALCHI’s platform! Join: https://openalchi.xyz #DeFi #NFTs',
-    'What’s next for #Web3? A) AI-driven NFTs B) DeFi C) Gaming. Vote: https://openalchi.xyz #DecentralizedAI'
-  ];
-  const prompt = prompts[Math.floor(Math.random() * prompts.length)];
-  try {
-    console.log('Calling DeepSeek API with prompt:', prompt);
-    const response = await axios.post(
-      'https://api.deepseek.com/chat/completions',
-      {
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: 'Generate a short, engaging tweet (280 chars or less) for OpenALCHI, an AI-blockchain project. Focus on NFT creation, royalties, or IPFS. Include a call-to-action and hashtags.'
-          },
-          { role: 'user', content: prompt }
-        ]
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-          'Content-Type': 'application/json'
+  // Select a random prompt from the configuration
+  const prompt = config.tweetPrompts[Math.floor(Math.random() * config.tweetPrompts.length)];
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      console.log(`Calling OpenRouter API - Attempt ${attempt}...`);
+      console.log(`Using model: ${config.openRouter.model}`);
+      console.log(`Prompt: ${prompt}`);
+
+      const response = await axios.post(
+        config.openRouter.apiUrl,
+        {
+          model: config.openRouter.model,
+          messages: [
+            {
+              role: 'system',
+              content: config.systemPrompt
+            },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: config.openRouter.maxTokens,
+          temperature: config.openRouter.temperature
         },
-        timeout: 3000 // 3-second timeout
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://openalchi.xyz',
+            'X-Title': 'OpenALCHI Tweet Bot'
+          },
+          timeout: config.openRouter.timeout
+        }
+      );
+
+      if (response.data && response.data.choices && response.data.choices[0]) {
+        const tweet = response.data.choices[0].message.content.trim();
+        
+        // Ensure tweet is within character limit
+        if (tweet.length > 280) {
+          console.log('Tweet too long, truncating...');
+          return tweet.substring(0, 277) + '...';
+        }
+        
+        console.log('Generated tweet:', tweet);
+        console.log(`Tweet length: ${tweet.length} characters`);
+        return tweet;
+      } else {
+        throw new Error('Invalid response structure from OpenRouter');
       }
-    );
-    const tweet = response.data.choices[0].message.content;
-    console.log('Generated tweet:', tweet);
-    return tweet;
-  } catch (error) {
-    console.error('DeepSeek Error:', error.message);
-    const fallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-    console.log('Using fallback tweet:', fallback);
-    return fallback;
+
+    } catch (error) {
+      console.error(`OpenRouter Error (Attempt ${attempt}):`, error.message);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+      }
+      
+      if (attempt === 3) {
+        // Use a random fallback tweet
+        const fallback = config.fallbackTweets[Math.floor(Math.random() * config.fallbackTweets.length)];
+        console.log('Using fallback tweet:', fallback);
+        return fallback;
+      }
+      
+      // Wait before retrying
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   }
 }
 
 async function postDailyTweet(client) {
   try {
     const tweet = await generatePost();
-    await client.v2.tweet(tweet);
-    console.log('Posted tweet:', tweet);
+    
+    console.log('\nPosting tweet to Twitter...');
+    const result = await client.v2.tweet(tweet);
+    
+    console.log('✅ Successfully posted tweet!');
+    console.log('Tweet content:', tweet);
+    console.log('Tweet ID:', result.data.id);
+    console.log('Tweet URL:', `https://twitter.com/i/web/status/${result.data.id}`);
+    
+    return result;
   } catch (error) {
-    console.error('Error posting tweet:', error.message);
+    console.error('❌ Error posting tweet:', error.message);
+    if (error.data) {
+      console.error('Twitter API Error:', JSON.stringify(error.data, null, 2));
+    }
+    throw error;
   }
 }
 
-module.exports = { postDailyTweet };
+module.exports = { postDailyTweet, generatePost };
