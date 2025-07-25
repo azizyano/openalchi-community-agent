@@ -1,23 +1,20 @@
-const { TwitterApi } = require('twitter-api-v2');
-require('dotenv').config();
-
-const client = new TwitterApi({
-  appKey: process.env.X_API_KEY,
-  appSecret: process.env.X_API_SECRET,
-  accessToken: process.env.X_ACCESS_TOKEN,
-  accessSecret: process.env.X_ACCESS_TOKEN_SECRET,
-});
-
-async function analyzeEngagement() {
+async function analyzeEngagement(client) {
   try {
+    console.log('Fetching user data for TOpenAlchi...');
     const user = await client.v2.userByUsername('TOpenAlchi');
+    if (!user.data) {
+      throw new Error('User TOpenAlchi not found');
+    }
+    console.log('Fetching timeline for user ID:', user.data.id);
     const tweets = await client.v2.userTimeline(user.data.id, { max_results: 100 });
     let totalLikes = 0, totalRetweets = 0, totalReplies = 0;
 
     for await (const tweet of tweets) {
-      totalLikes += tweet.public_metrics.like_count;
-      totalRetweets += tweet.public_metrics.retweet_count;
-      totalReplies += tweet.public_metrics.reply_count;
+      if (tweet.public_metrics) {
+        totalLikes += tweet.public_metrics.like_count || 0;
+        totalRetweets += tweet.public_metrics.retweet_count || 0;
+        totalReplies += tweet.public_metrics.reply_count || 0;
+      }
     }
 
     console.log(`Engagement Report:
@@ -27,7 +24,7 @@ async function analyzeEngagement() {
 
     await client.v2.sendDmToUser(user.data.id, `Weekly Engagement: ${totalLikes} likes, ${totalRetweets} retweets, ${totalReplies} replies. Optimize posts with more visuals!`);
   } catch (error) {
-    console.error('Error analyzing engagement:', error);
+    console.error('Error analyzing engagement:', error.message);
   }
 }
 

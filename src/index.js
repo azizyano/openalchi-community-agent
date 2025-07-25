@@ -1,15 +1,36 @@
 require('dotenv').config();
 const schedule = require('node-schedule');
 const { TwitterApi } = require('twitter-api-v2');
+const axios = require('axios');
 const { postDailyTweet } = require('./post');
 const { engageWithCommunity } = require('./engage');
 const { analyzeEngagement } = require('./Analytics');
 
-// Verificar claves
 console.log('API Key:', process.env.X_API_KEY ? 'Loaded' : 'Missing');
 console.log('DeepSeek API Key:', process.env.DEEPSEEK_API_KEY ? 'Loaded' : 'Missing');
 
-// Inicializar cliente
+// Test DeepSeek API
+async function testDeepSeek() {
+  try {
+    console.log('Testing DeepSeek API...');
+    const response = await axios.post(
+      'https://api.deepseek.com/chat/completions',
+      {
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: 'Generate a test tweet.' }]
+      },
+      {
+        headers: { Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}` },
+        timeout: 3000
+      }
+    );
+    console.log('DeepSeek Test Response:', response.data.choices[0].message.content);
+  } catch (error) {
+    console.error('DeepSeek Test Error:', error.message);
+  }
+}
+testDeepSeek();
+
 const client = new TwitterApi({
   appKey: process.env.X_API_KEY,
   appSecret: process.env.X_API_SECRET,
@@ -17,15 +38,12 @@ const client = new TwitterApi({
   accessSecret: process.env.X_ACCESS_TOKEN_SECRET,
 });
 
-// Pruebas inmediatas para verificar funcionalidad
 async function runTests() {
   try {
     console.log('Testing daily tweet...');
     await postDailyTweet(client);
-
     console.log('Testing community engagement...');
     await engageWithCommunity(client);
-
     console.log('Testing analytics...');
     await analyzeEngagement(client);
   } catch (error) {
@@ -34,19 +52,16 @@ async function runTests() {
 }
 runTests();
 
-// Programar tweet diario a las 10 AM +01:00 (9 AM UTC)
 schedule.scheduleJob('0 9 * * *', () => {
   console.log('Running daily tweet task...');
   postDailyTweet(client).catch(error => console.error('Daily tweet error:', error.message));
 });
 
-// Programar interacción comunitaria a las 12 PM +01:00 (11 AM UTC)
 schedule.scheduleJob('0 11 * * *', () => {
   console.log('Running community engagement task...');
   engageWithCommunity(client).catch(error => console.error('Engagement error:', error.message));
 });
 
-// Programar análisis semanal los lunes a las 9 AM +01:00 (8 AM UTC)
 schedule.scheduleJob('0 8 * * 1', () => {
   console.log('Running weekly analytics task...');
   analyzeEngagement(client).catch(error => console.error('Analytics error:', error.message));
