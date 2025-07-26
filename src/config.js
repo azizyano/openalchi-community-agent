@@ -48,16 +48,16 @@ module.exports = {
 
   // Tweet Content Templates
   tweetPrompts: [
-    "Generate a tweet about OpenALCHI's NFT creation feature with a link to https://openalchi.xyz.",
-    "Generate a tweet promoting a tutorial from https://docs.openalchi.xyz.",
-    "Generate a tweet about OpenALCHI's royalty system with a link to https://openalchi.xyz.",
+    "Generate a tweet about OpenALCHI's NFT creation feature. Include this exact URL in your tweet: https://openalchi.xyz",
+    "Generate a tweet promoting a tutorial. Include this exact URL in your tweet: https://docs.openalchi.xyz",
+    "Generate a tweet about OpenALCHI's royalty system. Include this exact URL in your tweet: https://openalchi.xyz",
     "Generate a poll about AI-blockchain use cases with hashtags #Web3 #NFTs.",
-    "Create an engaging tweet about decentralized AI and OpenALCHI's mission.",
-    "Write a tweet highlighting OpenALCHI's IPFS integration for NFT storage.",
-    "Generate a tweet about the benefits of AI-powered NFT creation.",
-    "Create a tweet inviting developers to contribute to OpenALCHI's open-source project.",
-    "Write a tweet about the future of Web3 and how OpenALCHI is contributing to it.",
-    "Generate a tweet showcasing a use case for OpenALCHI's platform."
+    "Create an engaging tweet about decentralized AI and OpenALCHI's mission. Include this exact URL: https://openalchi.xyz",
+    "Write a tweet highlighting OpenALCHI's IPFS integration for NFT storage. Include this exact URL: https://openalchi.xyz",
+    "Generate a tweet about the benefits of AI-powered NFT creation. Include this exact URL: https://openalchi.xyz",
+    "Create a tweet inviting developers to contribute to OpenALCHI's open-source project. Include this exact URL: https://openalchi.xyz",
+    "Write a tweet about the future of Web3 and how OpenALCHI is contributing to it. Include this exact URL: https://openalchi.xyz",
+    "Generate a tweet showcasing a use case for OpenALCHI's platform. Include this exact URL: https://openalchi.xyz"
   ],
 
   // Engagement Reply Prompts
@@ -90,7 +90,7 @@ module.exports = {
   ],
 
   // System prompts for AI
-  systemPrompt: 'You are a social media manager for OpenALCHI, an innovative AI-blockchain project. Generate short, engaging tweets (280 chars or less) that promote NFT creation, royalties, IPFS integration, or Web3 features. Include relevant hashtags and links. Be enthusiastic but professional, and focus on the value proposition for creators and developers.',
+  systemPrompt: 'You are a social media manager for OpenALCHI, an innovative AI-blockchain project. Generate short, engaging tweets (280 chars or less) that promote NFT creation, royalties, IPFS integration, or Web3 features. Include relevant hashtags. When a specific URL is mentioned in the prompt (like https://openalchi.xyz or https://docs.openalchi.xyz), you MUST include that exact URL in your tweet - do not use placeholders like [link]. Be enthusiastic but professional, and focus on the value proposition for creators and developers.',
   
   engagementSystemPrompt: 'You are a friendly community manager for OpenALCHI. Write helpful, engaging replies that add value to Web3/NFT conversations. Be genuine, not spammy. Only mention OpenALCHI when directly relevant to the discussion.'
 };
